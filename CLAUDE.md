@@ -4,32 +4,56 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository status
 
-This repository is currently a planning workspace for an ecommerce AI product-image generation desktop application. It is not a git repository yet.
+This repository is the development workspace for an ecommerce AI product-image generation desktop application. Git is initialized (2 commits on `master`).
 
 Key directories:
 
 - `docs/` — product, architecture, development documentation
 - `skills/` — custom Claude Code Agent skills
 - `workflows/` — multi-agent workflow definitions
+- `server/` — Go API + worker (cmd/api, cmd/worker, internal/)
 - `server/migrations/` — MySQL migration files
+- `desktop/frontend/` — Vue 3 + Element Plus + Fabric.js UI
+- `scripts/ci/` — CI check scripts
 - `.claude/` — Claude Code configuration
+- `.github/workflows/` — GitHub Actions CI/CD
 - `.env.example` — environment variable template (non-secret)
 - `.mcp.example.json` — MCP configuration template (non-secret)
+- `.mcp.json` — project MCP config (gitignored, contains secrets)
 
-There is no application scaffold, `package.json`, `go.mod`, or test suite yet.
+Application scaffold exists: Go API server (net/http), Go worker (stub), Vue 3 frontend. Tests pass for both server and frontend.
 
 ## Common commands
 
-No build, lint, dev-server, migration, or test commands are currently defined.
+### Go server
 
-When implementation starts, add real commands here for:
+```bash
+cd server
+go test ./...                         # run all tests
+go vet ./...                          # static analysis
+go fmt ./...                          # format code
+go run ./cmd/api                      # start API server
+go run ./cmd/worker                   # start worker (stub)
+```
 
-- Wails desktop development and build.
-- Vue frontend install/lint/typecheck/test.
-- Go API server run/test.
-- Go worker run/test.
-- MySQL migration up/down/status.
-- Redis/Asynq worker development.
+### Vue frontend
+
+```bash
+cd desktop/frontend
+npm install                           # install dependencies
+npm run dev                           # Vite dev server
+npm run build                         # type-check + production build
+npm run type-check                    # vue-tsc type check
+npm run test                          # Vitest unit tests (--run)
+npm run lint                          # ESLint
+```
+
+### Database
+
+```bash
+# Migrations applied via mysql-shadow-image MCP (MySQL on shadowdu.bbroot.com:13301)
+# See DATABASE_RULES.md for operational rules
+```
 
 ## Documentation structure
 
@@ -114,15 +138,13 @@ The desktop app must not call GPT-Image-2 directly and must not contain OpenAI o
 
 Default database name: `shadow_image`.
 
-MySQL MCP package: `@berthojoris/mcp-mysql-server`.
+MySQL host: `shadowdu.bbroot.com:13301` (via factory MCP config).
 
-Recommended permissions: `list,read,utility,create,update,execute,ddl,transaction`
+MySQL MCP package: `@benborla29/mcp-server-mysql`.
 
-Recommended categories: `database_discovery,custom_queries,schema_management,index_management,constraint_management,query_optimization,analysis,utilities,transaction_management`
+This project's MySQL MCP is configured in the factory-level `C:\Users\shado\.factory\mcp.json` as `mysql-shadow-image`. It is not defined in the project `.mcp.json` to avoid duplicate server registration.
 
-Do not enable destructive permissions such as `delete`, broad bulk operations, or dangerous table maintenance by default. Read `DATABASE_RULES.md` before performing database changes.
-
-Do not write the real password into committed/shared files. Use `.claude/settings.local.json` for secrets.
+Project `.mcp.json` contains only the `github` MCP server (`@modelcontextprotocol/server-github`).
 
 ## Key backend modules
 
