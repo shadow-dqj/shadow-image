@@ -3,11 +3,20 @@ import { describe, expect, it } from 'vitest'
 
 import HealthCard from '@/components/HealthCard.vue'
 
+const globalStubs = {
+  'el-card': {
+    template: '<section><slot name="header" /><slot /></section>',
+  },
+  'el-tag': {
+    template: '<span><slot /></span>',
+  },
+}
+
 describe('HealthCard', () => {
   it('renders ready status by default', () => {
     const wrapper = mount(HealthCard, {
       global: {
-        stubs: ['el-card', 'el-tag'],
+        stubs: globalStubs,
       },
     })
 
@@ -21,7 +30,7 @@ describe('HealthCard', () => {
         status: 'pending',
       },
       global: {
-        stubs: ['el-card', 'el-tag'],
+        stubs: globalStubs,
       },
     })
 

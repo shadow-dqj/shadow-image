@@ -27,7 +27,13 @@ npm run dev
 npm run type-check
 npm run test
 npm run build
+
+# Go Bridge 基础验证
+cd ../
+go test .
 ```
+
+说明：Wails CLI 当前用于后续桌面壳运行/打包；A1 阶段已补齐可编译的 Wails v3 Go 入口和基础 Bridge 服务。
 
 ## 项目结构（MVP 优先）
 
@@ -36,17 +42,19 @@ shadow-image/
 ├── desktop/                         <- Wails + Vue 3 桌面应用
 │   ├── frontend/                    <- Vue 3 + TS + Element Plus
 │   │   ├── src/
-│   │   │   ├── api/                 <- AI Provider / Gateway 请求封装
 │   │   │   ├── components/          <- 通用与业务组件
-│   │   │   ├── views/               <- 设置页、生图页、历史页、导出页
-│   │   │   ├── stores/              <- Pinia：设置、项目、生成历史
-│   │   │   ├── types/               <- TypeScript 类型
-│   │   │   ├── utils/               <- 图片/Prompt/文件工具
-│   │   │   └── composables/         <- useAiProvider/useGeneration 等
+│   │   │   ├── views/               <- 设置页、生图页、历史页、导出页（后续）
+│   │   │   ├── stores/              <- Pinia：设置、项目、生成历史（后续）
+│   │   │   ├── services/bridge/     <- Wails bridge 前端调用封装（后续）
+│   │   │   ├── types/               <- TypeScript 类型（后续）
+│   │   │   ├── utils/               <- 图片/Prompt/文件工具（后续）
+│   │   │   └── composables/         <- useAiProvider/useGeneration 等（后续）
 │   │   └── package.json
-│   ├── app.go                       <- 后续 Wails 应用入口
-│   ├── go.mod                       <- 后续 Wails 本地桥接
-│   └── wails.json
+│   ├── app_service.go               <- Go Bridge 基础服务和 AppData 目录能力
+│   ├── app_service_test.go          <- Go Bridge 基础测试
+│   ├── main.go                      <- Wails v3 桌面入口
+│   ├── go.mod                       <- Wails v3 Go module
+│   └── go.sum                       <- Go 依赖锁定
 ├── docs/                            <- 项目文档
 ├── skills/                          <- 自定义 Agent 技能规范
 ├── workflows/                       <- Agent 编排工作流

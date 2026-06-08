@@ -5,7 +5,9 @@ import HealthCard from './components/HealthCard.vue'
 <template>
   <main class="app-shell">
     <section class="hero-panel">
-      <p class="eyebrow">Shadow Image</p>
+      <p class="eyebrow">
+        Shadow Image
+      </p>
       <h1>电商 AI 生图桌面工具</h1>
       <p class="subtitle">
         Wails + Vue 3 桌面端脚手架已就绪，后续将接入上传、模板、生图任务和结果导出流程。

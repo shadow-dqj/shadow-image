@@ -11,7 +11,10 @@ const statusText = computed(() => (props.status === 'ready' ? '前端验证已�
 </script>
 
 <template>
-  <el-card class="health-card" shadow="hover">
+  <el-card
+    class="health-card"
+    shadow="hover"
+  >
     <template #header>
       <div class="card-header">
         <span>开发状态</span>
