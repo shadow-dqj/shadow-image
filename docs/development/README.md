@@ -6,6 +6,7 @@
 |------|------|------|
 | [environment-setup.md](environment-setup.md) | 桌面端开发环境搭建 | ✅ 已完成 |
 | [coding-standards.md](coding-standards.md) | Vue/TypeScript/Wails 编码规范 | ✅ 已完成 |
+| [mvp-implementation-roadmap.md](mvp-implementation-roadmap.md) | MVP-A/B/C 开发任务路线图与进度同步规则 | ✅ 已完成 |
 | [agent-automation.md](agent-automation.md) | Agent 自动化开发指南 | ✅ 已完成 |
 | [review-automation.md](review-automation.md) | Claude 自动审查配置说明 | ✅ 已完成 |
 | [feature-implementation-docs.md](feature-implementation-docs.md) | 自动化书写功能实现文档流程 | ✅ 已完成 |
