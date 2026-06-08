@@ -55,6 +55,17 @@ npm run lint                          # ESLint
 # See DATABASE_RULES.md for operational rules
 ```
 
+### Git push
+
+```bash
+# GitHub pushes require proxy (HTTPS 443 blocked on current network)
+export https_proxy=http://127.0.0.1:7897
+export http_proxy=http://127.0.0.1:7897
+git push
+
+# Remote: https://github.com/shadow-dqj/shadow-image.git (master → origin)
+```
+
 ## Documentation structure
 
 ```text
