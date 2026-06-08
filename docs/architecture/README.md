@@ -6,6 +6,7 @@
 |------|------|------|
 | [system-design.md](system-design.md) | 桌面端 AI 生图 MVP 架构 | ✅ 已完成 |
 | [tech-stack.md](tech-stack.md) | 桌面端技术栈决策 | ✅ 已完成 |
+| [desktop-generation-architecture.md](desktop-generation-architecture.md) | 主图 + 详情长图桌面端工程落地方案 | ✅ 已完成 |
 
 ## 待创建
 

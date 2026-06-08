@@ -4,7 +4,7 @@
 
 把软件打磨成“电商作图 Agent”，让用户不是从空白 Prompt 开始，而是按电商出图流程一步步完成：理解商品、明确平台、优化提示词、生成图片、检查质量、局部调整、导出成品。
 
-该 Agent 不是聊天机器人，而是内置在桌面工具里的作图流程编排器。
+该 Agent 不是聊天机器人，而是内置在桌面工具里的作图流程编排器。桌面端页面流、状态机、本地目录、Provider 能力矩阵和 Composer 落地设计见：[桌面端主图 + 详情长图工程落地方案](../architecture/desktop-generation-architecture.md)。
 
 ## 核心原则
 
@@ -209,6 +209,299 @@ MVP 编辑能力：
 - 使用的 Prompt / Negative Prompt
 - 商品参考图路径
 - 生成时间
+
+## 一键生成主图 + 详情长图 Agent Workflow
+
+当前开发调研阶段先固定产品大方向：用户上传**一张商品参考图**后，软件围绕该商品自动化生成平台主图和电商详情长图草案。后续开发、Prompt、编辑器和本地导出都应围绕这条主线展开，避免迭代偏离为泛化 AI 绘图工具。
+
+```text
+商品参考图 + 商品信息
+→ 商品上下文 ProductContext
+→ 自动生成任务 AutoGenerationJob
+   ├── 主图任务 MainImageTask
+   └── 详情长图任务 DetailLongImageTask
+→ 统一视觉规范 VisualStyleGuide
+→ 主图生成 / 质检 / 导出
+→ 详情页大纲规划 / 分段生成 / 分段质检
+→ 本地叠加文字、图标、参数表
+→ 拼接导出详情长图
+```
+
+### 基准决策
+
+1. **单商品优先**：MVP 只处理单个商品参考图，批量 SKU 后置。
+2. **主图 + 详情长图是核心闭环**：不是只生成单张好看的图，而是生成可用于电商上架的一组素材。
+3. **详情长图不一次性生成**：必须采用分段生成、统一风格、本地拼接。
+4. **AI 负责视觉，本地负责文字和版式**：营销文案、图标、参数表、步骤编号和标注优先由本地编辑/模板层叠加。
+5. **用户关键节点可确认**：MVP 可以先做到“一键生成草案 + 分段确认/重试”，不追求完全无人值守。
+6. **商品主体不可变**：所有 Agent 必须继承商品保持规则，避免改变商品形状、颜色、材质、Logo、包装文字和比例。
+
+### AutoGenerationJob
+
+`AutoGenerationJob` 是一次自动作图任务的总编排对象，用于把主图任务和详情长图任务绑定在同一商品、同一平台、同一风格下。
+
+```json
+{
+  "jobId": "local-generated-id",
+  "productContext": {},
+  "platformTarget": {},
+  "stylePreference": "premium clean ecommerce style",
+  "tasks": {
+    "mainImage": {},
+    "detailLongImage": {}
+  },
+  "status": "planning | generating | reviewing | composing | exported | failed"
+}
+```
+
+### ProductContext
+
+商品上下文是所有后续 Agent 的共同输入，目标是减少模型随意改商品。
+
+```json
+{
+  "sourceImagePath": "local/path/product.png",
+  "productName": "便携式榨汁杯",
+  "category": "厨房小家电",
+  "sellingPoints": ["便携", "无线", "易清洗"],
+  "preserveRules": [
+    "保持商品形状",
+    "保持商品颜色",
+    "保持材质质感",
+    "保持 Logo 和包装文字",
+    "保持商品比例和可见细节"
+  ],
+  "forbiddenRules": [
+    "不改变商品结构",
+    "不改变品牌标识",
+    "不生成乱码文字",
+    "不添加无关人物或道具"
+  ]
+}
+```
+
+### 主图 Agent
+
+主图 Agent 作为 P0 最先落地能力，目标是快速生成可用于平台入口的商品图，并为详情长图提供视觉锚点。
+
+流程：
+
+```text
+ProductContext
++ PlatformTarget
++ StylePreference
+→ MainImagePrompt
+→ AI image-to-image / edit 请求
+→ 主图质检
+→ MainVisualAnchor
+→ 本地保存 / 导出
+```
+
+主图质检重点：
+
+| 检查项 | 要求 |
+|--------|------|
+| 商品主体 | 不变形、不变色、不改变 Logo/包装文字 |
+| 背景 | 符合平台要求，例如 Amazon 白底 |
+| 构图 | 商品居中、比例合适、主体清晰 |
+| 尺寸 | 符合平台推荐比例和分辨率 |
+| 多余元素 | 不出现无关人物、道具、水印、乱码文字 |
+
+主图生成后应提取或记录 `MainVisualAnchor`，供详情长图继承：
+
+```json
+{
+  "dominantColors": ["#F7F3EA", "#D9B98F", "#222222"],
+  "lighting": "soft diffused studio lighting",
+  "backgroundStyle": "clean premium ecommerce background",
+  "productPlacement": "centered hero product",
+  "mood": "premium, clean, trustworthy"
+}
+```
+
+### 详情长图 Agent
+
+详情长图 Agent 是一个组合工作流，不是单次生图请求。它由规划、风格、分段 Prompt、分段生成、质检重试和本地拼接组成。
+
+```text
+ProductContext
++ PlatformTarget
++ MainVisualAnchor
+→ DetailPagePlan Agent
+→ VisualStyleGuide Agent
+→ SectionPrompt Agent
+→ SectionGeneration Agent
+→ SectionQualityReview Agent
+→ LocalComposer Agent
+→ DetailLongImageExport
+```
+
+### 详情页大纲 DetailPagePlan
+
+详情页大纲先规划内容结构，再进入生图。MVP 默认支持“快速版 4 段”和“完整版 8 段”。
+
+- 快速版 4 段：首屏卖点、场景展示、核心卖点、参数/包装。
+- 完整版 8 段：适合正式详情页草案，默认使用下表结构。
+
+| 顺序 | 段落 | 目标 | AI 负责 | 本地编辑负责 |
+|------|------|------|---------|-------------|
+| 01 | 首屏卖点段 | 第一眼吸引用户，建立商品价值 | 商品大图、使用场景背景、氛围光影 | 核心卖点标题、副标题、卖点短句 |
+| 02 | 场景展示段 | 展示商品在真实环境中的使用方式 | 商品在真实场景中、环境构图 | 场景说明文字、辅助标签 |
+| 03 | 核心卖点段 1 | 表达卖点 A 的功能或利益点 | 局部特写、效果示意背景 | 卖点标题、图标、短文案 |
+| 04 | 核心卖点段 2 | 表达卖点 B，可做对比或演示 | 对比背景、演示图、功能场景 | 对比文案、说明文字、箭头/标注 |
+| 05 | 材质/细节段 | 展示商品局部细节、材质、工艺、质感 | 材质特写、微距质感背景 | 标注线、局部说明、材质说明 |
+| 06 | 使用步骤段 | 用 1/2/3 步降低理解成本 | 步骤背景、示意构图 | 步骤编号、图标、短文案 |
+| 07 | 参数规格段 | 展示尺寸、规格、颜色等理性信息 | 简洁背景、商品辅助图 | 本地文字表格、尺寸线、规格参数 |
+| 08 | 包装/适用人群段 | 展示包装清单和适用人群 | 包装/配件视觉、人群氛围背景 | 包装清单文字、适用人群标签 |
+
+大纲数据结构建议：
+
+```json
+{
+  "mode": "quick4 | full8",
+  "sections": [
+    {
+      "id": "hero",
+      "order": 1,
+      "title": "首屏卖点段",
+      "goal": "第一眼吸引用户，建立商品价值",
+      "visualType": "hero_scene",
+      "targetHeight": 1200,
+      "copySlots": ["主标题", "副标题", "核心卖点"]
+    }
+  ]
+}
+```
+
+### 统一 VisualStyleGuide
+
+为了保证详情长图风格一致，详情页生成前必须先生成一份全局视觉规范。每个详情段落的 Prompt 都必须引用同一份 Style Guide。
+
+```json
+{
+  "colorPalette": {
+    "primary": "#F7F3EA",
+    "secondary": "#D9B98F",
+    "accent": "#222222",
+    "background": "#FFFFFF"
+  },
+  "backgroundStyle": "clean premium ecommerce background",
+  "lighting": "soft diffused studio lighting",
+  "composition": "product remains visually dominant, centered or rule-of-thirds",
+  "typography": {
+    "title": "bold sans-serif",
+    "body": "clean readable sans-serif"
+  },
+  "iconStyle": "minimal line icons",
+  "spacing": "large breathing space, consistent padding",
+  "preserveRules": ["preserve product shape", "preserve product color", "preserve logo and package text"],
+  "forbiddenRules": ["do not generate readable marketing text inside image", "do not alter product design"]
+}
+```
+
+风格一致性约束：
+
+- 所有分段共用同一张商品参考图。
+- 所有分段共用同一份 `VisualStyleGuide`。
+- 所有分段继承 `MainVisualAnchor` 的色彩、光影和背景方向。
+- 每段预留文字区，避免模型直接生成营销文字。
+- 只重试不合格段落，不整体重生成整张详情长图。
+
+### 分段 Prompt 生成
+
+每个详情段落的 Prompt 应由以下信息组合：
+
+```text
+ProductContext
++ PlatformTarget
++ VisualStyleGuide
++ Section Goal
++ Section Visual Requirement
++ Local Text Overlay Slots
++ Negative Prompt
+```
+
+段落 Prompt 必须强调：
+
+- 使用商品参考图作为真实依据。
+- 严格保持商品主体和包装细节。
+- 遵循统一色板、光影、背景、构图规则。
+- 为本地文字/图标/参数表留出干净空间。
+- 不直接生成可读广告文字、水印、乱码、虚构 Logo。
+
+### 分段生成、质检与重试
+
+详情长图的每一段都是独立可重试单元。
+
+```text
+section.planned
+→ section.prompt_ready
+→ section.generating
+→ section.reviewing
+→ section.approved | section.retry_needed | section.edit_needed | section.rejected
+```
+
+分段质检重点：
+
+| 检查项 | 要求 |
+|--------|------|
+| 商品一致性 | 商品形状、颜色、材质、Logo、包装文字不被篡改 |
+| 风格一致性 | 色彩、光影、背景、构图符合统一 Style Guide |
+| 段落目标 | 当前段落能表达对应卖点或信息目标 |
+| 文字空间 | 留出本地叠加文案、图标、参数表的空间 |
+| 平台适配 | 宽度、比例、信息密度适合目标平台详情页 |
+
+重试规则：
+
+- 单段失败只重试该段。
+- 重试时复用同一 `ProductContext`、`VisualStyleGuide` 和段落目标。
+- 用户可以选择“保持构图重试”或“换构图重试”。
+- 连续失败时提示用户降低复杂度，例如减少道具、减少局部特写要求或切换为本地文字表达。
+
+### 本地拼接与编辑边界
+
+长图成品由本地 Composer 拼接，不由模型直接生成完整长图。
+
+本地 Composer 负责：
+
+- 将各段裁切/缩放到统一详情页宽度。
+- 按段落顺序拼接成长图。
+- 添加标题、副标题、卖点文案、步骤编号。
+- 添加图标、参数表、尺寸线、标注线、包装清单。
+- 控制段间距、背景衔接、留白节奏。
+- 导出完整长图和分段素材。
+
+AI 不负责：
+
+- 直接生成长图内的营销文字。
+- 生成参数表、价格、认证标识、平台 Logo。
+- 生成需要精确可读的中文/英文文案。
+- 一次性输出完整详情长图。
+
+### 详情长图生成状态
+
+```text
+planning       详情大纲规划中
+generating     分段生成中
+reviewing      分段质检中
+composing      长图拼接中
+editable       可编辑
+exported       已导出
+failed         失败
+```
+
+### 详情长图导出内容
+
+```text
+detail-long-image.png        拼接后的长图
+detail-sections/             分段图片
+source-product-image          商品参考图
+style-guide.json              统一视觉规范
+section-plan.json             详情页大纲
+section-prompts.json          每段 Prompt / Negative Prompt
+text-overlays.json            本地叠加文案、图标、参数表配置
+export-summary.json           平台、尺寸、导出时间
+```
 
 ## MVP 页面建议
 
