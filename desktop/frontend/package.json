@@ -1,0 +1,36 @@
+{
+  "name": "shadow-image-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "type-check": "vue-tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint . --ext .ts,.vue --max-warnings 0"
+  },
+  "dependencies": {
+    "@vitejs/plugin-vue": "latest",
+    "vite": "latest",
+    "vue": "latest",
+    "element-plus": "latest",
+    "fabric": "latest"
+  },
+  "devDependencies": {
+    "@tsconfig/node20": "latest",
+    "@types/node": "latest",
+    "@vue/test-utils": "latest",
+    "@vue/tsconfig": "latest",
+    "@vitest/coverage-v8": "latest",
+    "eslint": "latest",
+    "eslint-plugin-vue": "latest",
+    "jiti": "latest",
+    "typescript-eslint": "latest",
+    "jsdom": "latest",
+    "typescript": "latest",
+    "vitest": "latest",
+    "vue-tsc": "latest"
+  }
+}

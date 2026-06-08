@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+bin/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment (secrets)
+.env
+.env.local
+.env.*.local
+
+# MCP local config (contains passwords)
+.claude/settings.local.json
+
+# Logs
+*.log
+logs/
+
+# Temp
+tmp/
+temp/
+*.tmp
+
+# Go
+*.exe
+*.test
+vendor/
+
+# Desktop builds
+desktop/build/
