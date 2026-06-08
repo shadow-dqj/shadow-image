@@ -4,16 +4,14 @@
 
 | 文件 | 说明 | 状态 |
 |------|------|------|
-| [system-design.md](system-design.md) | 系统架构设计 | ✅ 已完成 |
-| [tech-stack.md](tech-stack.md) | 技术栈决策 | ✅ 已完成 |
-| [database-schema.md](database-schema.md) | 数据库设计 | ✅ 已完成 |
+| [system-design.md](system-design.md) | 桌面端 AI 生图 MVP 架构 | ✅ 已完成 |
+| [tech-stack.md](tech-stack.md) | 桌面端技术栈决策 | ✅ 已完成 |
 
 ## 待创建
 
-- `api-design.md` — API 接口设计
-- `desktop-app.md` — 桌面端应用架构
-- `worker-design.md` — Worker 任务处理设计
-- `auth-design.md` — 认证与授权设计
-- `storage-design.md` — 对象存储方案
-- `security-design.md` — 安全设计
-- `deployment.md` — 部署架构
+- `desktop-app.md` — Wails 桌面端应用架构
+- `ai-provider.md` — AI 中转站/API Provider 适配设计
+- `local-storage.md` — 本地配置、历史记录、输出文件设计
+- `platform-rules.md` — Amazon/Shopify/TikTok/抖音/小红书规则设计
+- `export-design.md` — 平台规格导出设计
+- `security-design.md` — 本地凭证保存与外部 API 调用安全设计

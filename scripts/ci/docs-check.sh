@@ -9,13 +9,11 @@ echo "== Documentation link and stale reference check =="
 required_files=(
   "README.md"
   "CLAUDE.md"
-  "DATABASE_RULES.md"
   ".env.example"
-  ".mcp.example.json"
   "docs/product/PRD.md"
+  "docs/product/agent-image-workflow.md"
   "docs/architecture/system-design.md"
   "docs/architecture/tech-stack.md"
-  "docs/architecture/database-schema.md"
   "docs/development/environment-setup.md"
   "docs/development/coding-standards.md"
   "docs/development/agent-automation.md"
@@ -25,9 +23,8 @@ required_files=(
   ".github/workflows/ci-review.yml"
   "scripts/ci/secret-scan.sh"
   "scripts/ci/docs-check.sh"
-  "scripts/ci/migration-check.sh"
   "scripts/ci/scaffold-build-test.sh"
-  "server/migrations/001_init_shadow_image.sql"
+  "desktop/frontend/package.json"
 )
 
 for file in "${required_files[@]}"; do
@@ -42,26 +39,10 @@ if grep -RInE \
   --exclude-dir=.claude \
   --exclude-dir=node_modules \
   --include='*.md' \
-  'AUTOMATION_CONTEXT|电商AI生图软件方案|mysql配置|berthojoris-mcp-mysql-server-1\.43\.0|\.codex|generate-model|自动匹配对应技能|Agent 自动从以下文件' \
+  'AUTOMATION_CONTEXT|电商AI生图软件方案|mysql配置|berthojoris-mcp-mysql-server|\.codex|generate-model|自动匹配对应技能|Agent 自动从以下文件|database-schema\.md|DATABASE_RULES\.md|server/migrations|Go \+ Gin|GORM|Asynq' \
   .; then
   echo "Stale documentation reference found."
   exit 1
 fi
-
-# 检查常见相对链接目标。
-links=(
-  "docs/development/coding-standards.md:../../DATABASE_RULES.md"
-  "docs/architecture/database-schema.md:../../server/migrations/001_init_shadow_image.sql"
-)
-
-for item in "${links[@]}"; do
-  source_file="${item%%:*}"
-  link_target="${item#*:}"
-  source_dir="$(dirname "$source_file")"
-  if [[ ! -f "$source_dir/$link_target" ]]; then
-    echo "Broken link target from $source_file -> $link_target"
-    exit 1
-  fi
-done
 
 echo "Documentation check passed."

@@ -4,37 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository status
 
-This repository is the development workspace for an ecommerce AI product-image generation desktop application. Git is initialized (2 commits on `master`).
+This repository is the development workspace for an ecommerce AI product-image generation desktop application. GitHub remote: `https://github.com/shadow-dqj/shadow-image.git`.
+
+Current product direction: **desktop-only MVP**. The app is a local desktop tool where the user manually configures an AI gateway/model API Base URL, API Key, and model name. Development should focus on ecommerce product-image generation business value.
 
 Key directories:
 
+- `desktop/frontend/` — Vue 3 + TypeScript + Element Plus + Fabric.js UI
 - `docs/` — product, architecture, development documentation
-- `skills/` — custom Claude Code Agent skills
-- `workflows/` — multi-agent workflow definitions
-- `server/` — Go API + worker (cmd/api, cmd/worker, internal/)
-- `server/migrations/` — MySQL migration files
-- `desktop/frontend/` — Vue 3 + Element Plus + Fabric.js UI
+- `skills/` — custom Claude Code Agent skill specifications
+- `workflows/` — multi-agent workflow specifications
 - `scripts/ci/` — CI check scripts
 - `.claude/` — Claude Code configuration
 - `.github/workflows/` — GitHub Actions CI/CD
-- `.env.example` — environment variable template (non-secret)
-- `.mcp.example.json` — MCP configuration template (non-secret)
+- `.env.example` — non-secret environment/config template
 - `.mcp.json` — project MCP config (gitignored, contains secrets)
 
-Application scaffold exists: Go API server (net/http), Go worker (stub), Vue 3 frontend. Tests pass for both server and frontend.
+Application scaffold exists: Vue 3 frontend. Future development should prioritize the desktop frontend and Wails local bridge.
 
 ## Common commands
-
-### Go server
-
-```bash
-cd server
-go test ./...                         # run all tests
-go vet ./...                          # static analysis
-go fmt ./...                          # format code
-go run ./cmd/api                      # start API server
-go run ./cmd/worker                   # start worker (stub)
-```
 
 ### Vue frontend
 
@@ -48,13 +36,6 @@ npm run test                          # Vitest unit tests (--run)
 npm run lint                          # ESLint
 ```
 
-### Database
-
-```bash
-# Migrations applied via mysql-shadow-image MCP (MySQL on shadowdu.bbroot.com:13301)
-# See DATABASE_RULES.md for operational rules
-```
-
 ### Git push
 
 ```bash
@@ -66,151 +47,112 @@ git push
 # Remote: https://github.com/shadow-dqj/shadow-image.git (master → origin)
 ```
 
+## MVP product architecture
+
+```text
+Wails desktop app
+  → Vue 3 UI
+  → Element Plus components
+  → Fabric.js canvas/editor
+  → local config and local file system
+  → user-configured AI gateway API
+```
+
+MVP user flow:
+
+```text
+打开桌面工具
+  → 设置 AI Provider（Base URL / API Key / Model / 类型）
+  → 上传商品参考图
+  → 选择电商平台和图片类型
+  → 输入或套用 Prompt
+  → 调用用户配置的 AI 中转站接口
+  → 预览生成结果
+  → 本地保存 / 导出
+```
+
+## MVP AI provider rules
+
+The desktop app calls the user's configured AI gateway directly. This is an intentional product decision for a local/bring-your-own-key desktop tool.
+
+Required settings:
+
+- API Base URL
+- API Key
+- Model name
+- Provider type: OpenAI-compatible or custom gateway
+- Request timeout
+- Default image size/quality
+
+Security notes:
+
+- API keys are user-supplied and stored locally only.
+- Do not commit real API keys.
+- Prefer masked display for API keys in UI.
+- Add local encryption or OS keychain later if needed.
+
+## Product priorities
+
+Focus on ecommerce image-generation business value:
+
+1. Product reference image upload and preview.
+2. Platform presets: Amazon, Shopify, TikTok, 抖音, 小红书.
+3. Image types: white-background main image, lifestyle scene, vertical ad, social cover.
+4. Prompt template, prompt optimization, and negative prompt editing.
+5. Manual AI provider/gateway configuration.
+6. Single-image generation first; batch SKU workflow later.
+7. Local result history and export.
+8. Lightweight editing/composition with Fabric.js.
+
 ## Documentation structure
 
 ```text
 docs/
-├── product/              ← product requirements, feature specs, user stories
-│   ├── PRD.md            ← product requirements document
-│   └── ...
-├── architecture/         ← system design, tech stack, database schema
-│   ├── system-design.md  ← overall system architecture
-│   ├── tech-stack.md     ← technology decisions
-│   ├── database-schema.md← database design
-│   └── ...
+├── product/              ← product requirements, MVP specs, user stories
+├── architecture/         ← desktop architecture, AI provider, local storage
 ├── development/          ← environment setup, coding standards, agent automation
-│   ├── environment-setup.md
-│   ├── coding-standards.md
-│   └── agent-automation.md
 └── decisions/            ← architecture decision records (ADR)
-    └── template.md
 ```
 
 ## Skills and workflows
 
 ```text
 skills/
-├── dev/                  ← development skills
-│   ├── generate-go-model.md
-│   ├── generate-api-handler.md
-│   ├── generate-vue-component.md
-│   ├── create-migration.md
-│   ├── build-verify.md
-│   ├── generate-test.md
-│   └── auto-fix.md
-└── review/               ← review skills
-    ├── code-review.md
-    └── security-review.md
+├── dev/                  ← development skill specifications
+└── review/               ← review skill specifications
 
 workflows/
-├── dev/                  ← development workflows
-│   ├── full-feature-dev.md
-│   ├── add-database-table.md
-│   ├── scaffold-new-module.md
-│   ├── dev-verify-loop.md
-│   └── tdd-cycle.md
-└── review/               ← review workflows
-    └── comprehensive-review.md
+├── dev/                  ← development workflow specifications
+└── review/               ← review workflow specifications
 ```
 
-## Product and architecture
+When implementing features, prefer desktop/Vue/Wails/local AI provider tasks.
 
-### Target architecture
-
-```text
-Wails desktop app
-  → Vue 3 UI
-  → Go local desktop bridge
-  → local SQLite cache and local file system
-  → HTTPS cloud API
-
-Cloud Go API
-  → MySQL 8.0 authoritative business database
-  → Redis + Asynq task queue
-  → Go Worker
-  → image preprocessing / background removal
-  → OpenAI GPT-Image-2 generation/editing
-  → post-processing and platform-rule validation
-  → object storage + CDN
-```
-
-### Tech stack
-
-**Desktop:** Wails + Vue 3 + TypeScript + Element Plus + Fabric.js
-**Cloud:** Go + Gin + GORM + MySQL 8.0 + Redis + Asynq
-**AI:** OpenAI GPT-Image-2 (cloud only)
-**Storage:** Object storage (OSS/COS/R2/S3) + CDN
-
-### Security boundary
-
-The desktop app must not call GPT-Image-2 directly and must not contain OpenAI or database secrets. Desktop responsibilities are local file UX, preview, lightweight editing, local cache, upload/download, and API calls. Cloud responsibilities are authentication, billing/credits, templates/prompts, generation tasks, GPT-Image-2 calls, object storage, and authoritative task status.
-
-## MySQL and MCP
-
-Default database name: `shadow_image`.
-
-MySQL host: `shadowdu.bbroot.com:13301` (via factory MCP config).
-
-MySQL MCP package: `@benborla29/mcp-server-mysql`.
-
-This project's MySQL MCP is configured in the factory-level `C:\Users\shado\.factory\mcp.json` as `mysql-shadow-image`. It is not defined in the project `.mcp.json` to avoid duplicate server registration.
-
-Project `.mcp.json` contains only the `github` MCP server (`@modelcontextprotocol/server-github`).
-
-## Key backend modules
+## Desktop MVP modules
 
 ```text
-Auth        authentication and sessions
-User        users, teams, device authorization
-Asset       uploaded/generated image assets
-Upload      signed upload and local/cloud transfer flow
-Project     projects, SKU groups, batch catalogs
-Generation  generation jobs, worker payloads, outputs
-Template    platform/style/image templates
-Prompt      prompt templates and prompt versions
-Credit      credit balance and transactions
-Billing     subscriptions and payments
-Storage     object storage and CDN URL handling
-Moderation  image/content safety checks
-Export      ZIP and platform-specific export packages
-Admin       operational dashboard and review tools
-Webhook     async callbacks and external integrations
-```
-
-## Key database tables
-
-```text
-users
-teams
-subscriptions
-credit_accounts
-credit_transactions
-assets
-projects
-generation_jobs
-generation_outputs
-templates
-prompt_versions
-platform_rules
-brand_kits
-export_jobs
-api_keys
-webhook_events
-admin_audit_logs
+Settings        AI provider/gateway URL, key, model, timeout, defaults
+Upload          local product image upload, validation, preview
+Project         local project/SKU grouping
+Prompt          platform prompt presets, user prompt editing, negative rules
+PromptOptimizer product info + platform rules → optimized prompt and negative prompt
+Generation      direct AI gateway call, result parsing, retry, error handling
+Canvas          Fabric.js preview, overlay text, crop/resize/light edits
+History         local generation records and output files
+Export          save images by platform size/format
+PlatformRules   local Amazon/Shopify/TikTok/抖音/小红书 presets
 ```
 
 ## Product constraints
 
-- GPT-Image-2 is the primary cloud generation/editing engine.
+- Prompt optimization should turn rough user intent into structured ecommerce image prompts before generation.
 - Product-reference images should be used whenever possible; avoid pure text-to-image for real product outputs.
 - Generated outputs should preserve product shape, color, material, logo, packaging text, and visible details.
 - Advertising text should usually be added by the editor/template layer, not generated directly into the image.
-- Background removal, white-background layout, resizing, compression, and text composition should use cheaper deterministic services when possible.
-- Batch SKU workflows are a core paid feature.
+- Background removal, white-background layout, resizing, compression, and text composition should use deterministic/local processing when possible.
+- Batch SKU workflows are important but should follow after the single-image MVP works.
 - Platform-rule validation is part of the value proposition.
-- Cost controls are required: low-cost preview before high-quality output, quality tiers, async/batch jobs, retry limits.
-- MySQL is authoritative for business data. Redis/Asynq is for queues, retries, and worker coordination only.
-- Credit/accounting changes must be transactional and concurrency-safe.
+- Cost controls in MVP are user-facing: show estimated request type, allow model/quality selection, and avoid unnecessary regenerations.
 
 ## Documentation style
 

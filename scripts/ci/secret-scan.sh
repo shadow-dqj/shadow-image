@@ -6,20 +6,23 @@ cd "$ROOT"
 
 echo "== Secret scan =="
 
-# 检查已知明文密码/API Key 形态。这里只扫描可提交文本，不扫描 .claude/settings.local.json。
-if grep -RInE \
-  --exclude-dir=.git \
-  --exclude-dir=.claude \
-  --exclude-dir=node_modules \
-  --exclude-dir=dist \
-  --exclude-dir=build \
-  --include='*.md' \
-  --include='*.json' \
-  --include='*.sql' \
-  --include='*.example' \
-  --include='*.env' \
-  '1qaz@WSX|sk-[A-Za-z0-9]{20,}|DB_PASSWORD[[:space:]]*[:=][[:space:]]*["'"'']?[^<[:space:]]|OPENAI_API_KEY[[:space:]]*[:=][[:space:]]*["'"'']?[^<[:space:]]|SECRET_KEY[[:space:]]*[:=][[:space:]]*["'"'']?[^<[:space:]]|JWT_SECRET[[:space:]]*[:=][[:space:]]*["'"'']?[^<[:space:]]' \
-  .; then
+# 只扫描 Git 可提交文件：tracked + untracked，并遵守 .gitignore。
+# 这样不会扫描本地私有 .mcp.json、.env、node_modules 等文件。
+mapfile -t files < <(
+  git ls-files -co --exclude-standard \
+    | grep -E '(\.md$|\.json$|\.sql$|\.example$|\.env$)' \
+    | grep -v '^scripts/ci/secret-scan.sh$' \
+    | while read -r file; do [[ -f "$file" ]] && printf '%s\n' "$file"; done || true
+)
+
+if [[ "${#files[@]}" -eq 0 ]]; then
+  echo "No text config/docs files to scan."
+  exit 0
+fi
+
+if grep -nE \
+  'sk-[A-Za-z0-9]{20,}|DB_PASSWORD[[:space:]]*[:=][[:space:]]*["'"'"']?[^<[:space:]]|OPENAI_API_KEY[[:space:]]*[:=][[:space:]]*["'"'"']?[^<[:space:]]|SECRET_KEY[[:space:]]*[:=][[:space:]]*["'"'"']?[^<[:space:]]|JWT_SECRET[[:space:]]*[:=][[:space:]]*["'"'"']?[^<[:space:]]' \
+  "${files[@]}"; then
   echo "Secret-like value found. Replace it with a placeholder before committing."
   exit 1
 fi

@@ -2,11 +2,11 @@
 
 ## 目的
 
-本文说明如何使用 GitHub Actions 对本项目进行自动 CI 审查。当前项目处于规划/脚手架准备阶段，因此 CI 采用“阶段化”策略：
+本文说明如何使用 GitHub Actions 对本项目进行自动 CI 审查。当前项目优先做桌面端电商 AI 商品图生成 MVP，因此 CI 重点是：
 
-1. **现在立即可用**：文档一致性、敏感信息扫描、migration 安全检查。
-2. **脚手架出现后自动启用**：Go build/test/vet、Vue type-check/lint/test/build。
-3. **功能开发后扩展**：覆盖率、E2E、发布前安全检查。
+1. 文档一致性和敏感信息扫描。
+2. Vue/TypeScript 桌面前端 type-check/lint/test/build。
+3. 历史 Go server scaffold 如存在则保持可测，但不是 MVP 优先方向。
 
 ## 已创建文件
 
@@ -37,13 +37,13 @@ permissions:
   contents: read
 ```
 
-不配置数据库密码、不连接生产库、不写入外部系统。
+不配置真实模型服务凭证、不连接生产库、不写入外部系统。
 
 ## Job 说明
 
 ### planning-review
 
-适用于当前规划阶段，始终运行。
+始终运行。
 
 检查内容：
 
@@ -53,41 +53,24 @@ permissions:
 
 2. `docs-check.sh`
    - 检查关键文件是否存在。
-   - 检查旧文件引用和过期描述。
+   - 检查过期描述。
    - 检查关键相对链接是否可解析。
 
 3. `migration-check.sh`
-   - 检查 migration 中是否存在默认禁止的危险 SQL。
-   - 检查 migration 是否记录 `schema_migrations`。
-   - 检查建表/建库是否使用 `utf8mb4`。
+   - 当前仅作为后续云端/SaaS SQL 参考检查。
+   - MVP 不执行远程数据库变更。
 
 ### scaffold-build-test
 
 脚手架感知型构建测试。
 
-如果存在：
+优先检查桌面前端：
 
 ```text
-server/go.mod 或 go.mod
+desktop/frontend/package.json
 ```
 
-则运行 Go 检查：
-
-```bash
-go mod verify
-gofmt -l .
-go vet ./...
-go test ./...
-go build ./...
-```
-
-如果存在：
-
-```text
-desktop/frontend/package.json 或 package.json
-```
-
-则运行前端检查：
+运行：
 
 ```bash
 npm run type-check --if-present
@@ -96,14 +79,6 @@ npm run test --if-present
 npm run build --if-present
 ```
 
-如果脚手架不存在，则输出：
-
-```text
-No application scaffold found. Planning-stage checks only.
-```
-
-不会把“还没创建工程”当作失败。
-
 ## 本地运行 CI 检查
 
 在 Git Bash 中运行：
@@ -111,8 +86,17 @@ No application scaffold found. Planning-stage checks only.
 ```bash
 bash scripts/ci/secret-scan.sh
 bash scripts/ci/docs-check.sh
-bash scripts/ci/migration-check.sh
 bash scripts/ci/scaffold-build-test.sh
+```
+
+桌面前端开发时优先运行：
+
+```bash
+cd desktop/frontend
+npm run type-check
+npm run lint
+npm run test
+npm run build
 ```
 
 ## CI 审查和 Claude 审查的关系
@@ -125,35 +109,30 @@ bash scripts/ci/scaffold-build-test.sh
 推荐流程：
 
 ```text
-Claude 自动开发
+Claude 实现桌面端 MVP 功能
   ↓
-Claude 本地审查 + 修复
+本地 type-check/lint/test/build
   ↓
-本地运行 scripts/ci/*.sh
+Claude 代码审查 + 修复
   ↓
 提交 PR
   ↓
 GitHub Actions 自动审查
-  ↓
-失败则 Claude 根据日志修复
 ```
 
 ## 后续扩展
 
-当项目脚手架完成后，建议补充：
+当桌面端 MVP 稳定后，建议补充：
 
-1. Go 覆盖率阈值。
-2. 前端 Vitest 覆盖率。
-3. Playwright E2E。
-4. Docker build。
-5. OpenAPI 文档生成检查。
-6. migration dry-run 到临时 MySQL。
-7. 依赖漏洞扫描。
+1. 前端 Vitest 覆盖率。
+2. Playwright 桌面/浏览器 E2E。
+3. Wails 打包检查。
+4. AI Provider mock 测试。
+5. 本地配置/历史迁移测试。
+6. 依赖漏洞扫描。
 
 ## 安全注意事项
 
-- CI 不存真实数据库密码。
-- CI 不连接远程生产数据库。
-- migration 执行必须由人工确认目标库。
-- GitHub Secrets 后续只保存最小必要的测试环境凭据。
+- CI 不存真实模型服务凭证。
+- CI 不连接用户配置的 AI 中转站。
 - 不使用 `pull_request_target` 运行不可信 PR 代码。

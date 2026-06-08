@@ -2,87 +2,91 @@
 
 ## 前置依赖
 
-### 桌面端开发
+### 桌面端 MVP 开发
 
 ```bash
-# Go 1.22+
+# Go（Wails 本地桥接需要）
 go version
 
 # Node.js 20+
 node --version
 
-# Wails CLI
+# Wails CLI（后续桌面壳集成使用）
 go install github.com/wailsapp/wails/v3/cmd/wails3@latest
 
-# pnpm (推荐)
-npm install -g pnpm
+# npm / pnpm 均可；当前 frontend 使用 npm scripts
+npm --version
 ```
 
-### 云端开发
+### 当前前端脚手架
 
 ```bash
-# Go 1.22+
-go version
-
-# MySQL 8.0 (开发用远程实例，见 MCP 配置)
-# Redis 7.x
-redis-server --version
+cd desktop/frontend
+npm install
+npm run dev
+npm run type-check
+npm run test
+npm run build
 ```
 
-## 项目结构（规划中）
+## 项目结构（MVP 优先）
 
 ```text
 shadow-image/
-├── desktop/                  <- Wails + Vue 3 桌面应用
-│   ├── app.go               <- Wails 应用入口
-│   ├── frontend/            <- Vue 3 + TS + Element Plus
+├── desktop/                         <- Wails + Vue 3 桌面应用
+│   ├── frontend/                    <- Vue 3 + TS + Element Plus
 │   │   ├── src/
-│   │   │   ├── components/
-│   │   │   ├── views/
-│   │   │   ├── stores/      <- Pinia
-│   │   │   ├── api/         <- HTTP 客户端
-│   │   │   └── composables/
+│   │   │   ├── api/                 <- AI Provider / Gateway 请求封装
+│   │   │   ├── components/          <- 通用与业务组件
+│   │   │   ├── views/               <- 设置页、生图页、历史页、导出页
+│   │   │   ├── stores/              <- Pinia：设置、项目、生成历史
+│   │   │   ├── types/               <- TypeScript 类型
+│   │   │   ├── utils/               <- 图片/Prompt/文件工具
+│   │   │   └── composables/         <- useAiProvider/useGeneration 等
 │   │   └── package.json
-│   ├── go.mod
+│   ├── app.go                       <- 后续 Wails 应用入口
+│   ├── go.mod                       <- 后续 Wails 本地桥接
 │   └── wails.json
-├── server/                   <- Go 云端服务
-│   ├── cmd/
-│   │   ├── api/             <- API 服务入口
-│   │   └── worker/          <- Worker 入口
-│   ├── internal/
-│   │   ├── handler/         <- HTTP handlers
-│   │   ├── service/         <- 业务逻辑
-│   │   ├── repository/      <- 数据访问
-│   │   ├── model/           <- GORM 模型
-│   │   ├── middleware/      <- Gin 中间件
-│   │   ├── worker/          <- Asynq 任务处理器
-│   │   └── config/          <- 配置
-│   ├── migrations/          <- SQL 迁移文件
-│   ├── go.mod
-│   └── go.sum
-├── docs/                     <- 项目文档
-├── skills/                   <- 自定义 Agent 技能
-├── workflows/                <- Agent 编排工作流
-└── deploy/                   <- 部署配置 (Docker, k8s)
+├── docs/                            <- 项目文档
+├── skills/                          <- 自定义 Agent 技能规范
+├── workflows/                       <- Agent 编排工作流
+├── server/                          <- 后续云端/SaaS 预留，MVP 暂不优先
+└── scripts/ci/                      <- CI 检查脚本
 ```
 
-## MCP 配置
-
-本项目使用 `@berthojoris/mcp-mysql-server` 连接远程 MySQL。
-
-配置文件模板见 `.mcp.example.json`，实际配置放在 `.claude/settings.local.json` 中。
-
-## 开发流程
+## MVP 开发流程
 
 1. **需求确认** → 查看 `docs/product/PRD.md`
 2. **架构理解** → 查看 `docs/architecture/system-design.md`
 3. **编码规范** → 查看 `docs/development/coding-standards.md`
-4. **Agent 开发** → 使用 `skills/` 和 `workflows/` 自动化
-5. **数据库变更** → 创建新迁移文件到 `server/migrations/`
-6. **代码审查** → 使用 `code-review` skill
+4. **前端页面开发** → 设置页、生图页、历史页、导出页
+5. **AI Provider 适配** → OpenAI-compatible / Custom Gateway
+6. **本地保存** → 配置、上传图、输出图、生成历史
+7. **测试与审查** → Vitest、lint、type-check、code-review
+
+## AI Provider 本地配置
+
+MVP 阶段由用户手动填写：
+
+- API Base URL
+- API Key
+- Model
+- Provider Type
+- Timeout
+- Default Size / Quality
+
+实现注意：
+
+- UI 中 API Key 必须脱敏展示。
+- 不把真实 Key 写入仓库或文档。
+- 请求前提示用户图片和 Prompt 会发送到其配置的服务商。
+- Provider 差异用 Adapter 处理，不散落在页面组件里。
+
+## MCP 配置
+
+- GitHub MCP 用于仓库/PR/Issue 等操作。
+- 桌面 MVP 开发不依赖数据库 MCP。
 
 ## 环境变量
 
-参见仓库根目录下的 `.env.example` 模板文件。
-
-桌面端和云端各自维护独立的 `.env` 文件，均不提交到仓库（已在 `.gitignore` 中排除）。
+参见仓库根目录下的 `.env.example`。MVP 只需要桌面端本地 AI Provider 配置，不需要提交任何真实密钥。
