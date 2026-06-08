@@ -16,4 +16,4 @@
 NNNN-简短描述.md
 ```
 
-示例：`0001-use-wails-for-desktop.md`、`0002-use-mysql-as-authoritative-db.md`
+示例：`0001-use-wails-for-desktop.md`、`0002-use-local-ai-provider-settings.md`

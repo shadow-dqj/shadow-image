@@ -21,8 +21,9 @@ Thumbs.db
 .env.local
 .env.*.local
 
-# MCP local config (contains passwords)
+# MCP local config (contains secrets)
 .claude/settings.local.json
+.mcp.json
 
 # Logs
 *.log

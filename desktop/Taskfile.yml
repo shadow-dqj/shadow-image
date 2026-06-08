@@ -1,0 +1,46 @@
+version: '3'
+
+vars:
+  APP_NAME: shadow-image
+  BIN_DIR: bin
+
+tasks:
+  frontend:install:
+    desc: Install frontend dependencies
+    dir: frontend
+    cmds:
+      - npm install
+
+  frontend:build:
+    desc: Build Vue frontend assets
+    dir: frontend
+    deps:
+      - frontend:install
+    cmds:
+      - npm run build
+
+  test:
+    desc: Run desktop Go tests
+    deps:
+      - frontend:build
+    cmds:
+      - go test .
+
+  build:
+    desc: Build desktop executable for current development platform
+    cmds:
+      - task: windows:build
+
+  windows:build:
+    desc: Build Windows desktop executable with embedded frontend assets
+    deps:
+      - frontend:build
+    cmds:
+      - mkdir -p {{.BIN_DIR}}
+      - go build -tags production -o {{.BIN_DIR}}/{{.APP_NAME}}.exe .
+
+  clean:
+    desc: Remove local build outputs
+    cmds:
+      - rm -rf {{.BIN_DIR}}
+      - rm -rf frontend/dist

@@ -7,7 +7,7 @@
 ## 核心原则
 
 1. **先文档后代码**：功能开发前先明确需求、边界和验收标准。
-2. **文档跟随实现**：实现过程中同步更新任务、接口、数据库和测试说明。
+2. **文档跟随实现**：实现过程中同步更新任务、接口、本地数据和测试说明。
 3. **可验证**：每个功能文档必须写清楚如何验证。
 4. **可交接**：任何 Agent 读取文档后能继续开发。
 5. **不写真实密钥**：配置只写变量名和占位符。
@@ -97,9 +97,9 @@ docs/features/<feature-name>.md
 
 - 用户可以上传 jpg/png/webp 商品图。
 - 文件超过限制时返回明确错误。
-- 上传成功后创建 assets 记录。
-- 桌面端不直接连接 MySQL。
-- 图片二进制不写入 MySQL。
+- 上传成功后生成本地素材记录。
+- 桌面端可以使用用户手动配置的 AI Provider。
+- 图片二进制不写入数据库，MVP 优先保存在本地输出目录。
 ```
 
 ## 阶段 2：技术设计 design.md
@@ -132,10 +132,10 @@ docs/features/<feature-name>.md
 
 ```text
 Desktop Upload UI
-  → Cloud Upload API
-  → Storage Signed URL
-  → Object Storage
-  → assets metadata in MySQL
+  → Local file validation
+  → Local preview
+  → User-configured AI Provider
+  → Local output/history
 ```
 
 ## 阶段 3：任务拆分 tasks.md
@@ -147,36 +147,29 @@ Desktop Upload UI
 
 ## 准备
 
-- [ ] 阅读 PRD 和架构文档
-- [ ] 确认数据库变更
+- [ ] 阅读 PRD 和桌面端架构文档
+- [ ] 确认本地数据/配置变更
 - [ ] 确认可执行验证命令
 
-## 后端
+## 桌面端
 
-- [ ] 新增/更新 migration
-- [ ] 生成 model
-- [ ] 实现 repository
-- [ ] 实现 service
-- [ ] 实现 handler
-- [ ] 注册路由
-
-## 前端
-
-- [ ] 创建 API client
-- [ ] 创建 store
-- [ ] 创建页面/组件
-- [ ] 接入错误提示
+- [ ] 定义 TypeScript 类型
+- [ ] 创建/更新 Pinia store
+- [ ] 实现页面/组件
+- [ ] 实现 AI Provider adapter
+- [ ] 实现本地保存/读取
+- [ ] 接入错误提示和 loading 状态
 
 ## 测试
 
-- [ ] Service 单元测试
-- [ ] Handler 集成测试
+- [ ] Provider 请求构造测试
+- [ ] Store 单元测试
 - [ ] 前端组件测试
-- [ ] E2E 流程测试（如适用）
+- [ ] 手动端到端流程验证
 
 ## 验证
 
-- [ ] build-verify
+- [ ] type-check / lint / test / build
 - [ ] code-review
 - [ ] security-review
 ```
@@ -220,11 +213,12 @@ Desktop Upload UI
 ## 自动验证命令
 
 ```bash
-# 后端
-cd server && go test ./...
-
-# 前端
-cd desktop/frontend && npm run test
+# 前端 MVP
+cd desktop/frontend
+npm run type-check
+npm run lint
+npm run test
+npm run build
 ```
 
 ## 跳过项
@@ -271,7 +265,7 @@ cd desktop/frontend && npm run test
 
 ```text
 请根据以下需求，在 docs/features/<feature-name>/ 下生成 requirements.md、design.md、tasks.md、test-plan.md。
-要求：遵循项目 CLAUDE.md、PRD、架构文档和 DATABASE_RULES.md，不写真实密钥，当前缺少脚手架的验证项标记 SKIPPED。
+要求：遵循项目 CLAUDE.md、PRD 和架构文档，不写真实密钥，当前缺少脚手架的验证项标记 SKIPPED。
 ```
 
 ### 从实现更新文档
@@ -291,12 +285,14 @@ cd desktop/frontend && npm run test
 本项目后续建议优先为这些功能建立文档目录：
 
 ```text
-docs/features/auth/
-docs/features/upload/
+docs/features/ai-settings/
+docs/features/upload-preview/
+docs/features/prompt-presets/
+docs/features/prompt-optimizer/
 docs/features/generation/
-docs/features/credit/
-docs/features/template/
+docs/features/history/
 docs/features/export/
+docs/features/canvas-editor/
 ```
 
-其中 `generation` 和 `credit` 涉及任务状态和积分事务，必须包含 `database.md`、`test-plan.md` 和 `review.md`。
+其中 `ai-settings`、`prompt-optimizer` 和 `generation` 涉及用户填写的访问凭证、提示词优化和外部 API 调用，必须包含安全边界、错误处理和手动验证步骤。
