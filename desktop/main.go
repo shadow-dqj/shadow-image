@@ -10,9 +10,7 @@ func main() {
 	app := application.New(application.Options{
 		Name:        "Shadow Image",
 		Description: "Desktop ecommerce AI product image generator",
-		// A1 keeps the desktop shell compileable before the production asset pipeline is wired.
-		// A later task will switch this to the Vite build output once Wails build tasks exist.
-		Assets: application.AlphaAssets,
+		Assets:     appAssets,
 		Bind: []any{
 			NewAppService(),
 		},

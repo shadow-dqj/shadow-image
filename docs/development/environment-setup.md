@@ -31,6 +31,11 @@ npm run build
 # Go Bridge 基础验证
 cd ../
 go test .
+
+# Wails/Windows 桌面包最小验证
+# 确保 D:\Go\bin 在 PATH 中，或显式设置：PATH="/d/Go/bin:$PATH"
+wails3 build
+# 输出：desktop/bin/shadow-image.exe
 ```
 
 说明：Wails CLI 当前用于后续桌面壳运行/打包；A1 阶段已补齐可编译的 Wails v3 Go 入口和基础 Bridge 服务。

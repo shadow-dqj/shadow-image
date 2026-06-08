@@ -84,7 +84,8 @@ TaskUpdate done → 完成处理
 | ID | 任务 | 状态 | 依赖 | 交付物 | 验收标准 |
 |----|------|------|------|--------|----------|
 | A1 | 检查/补齐桌面工程结构 | done | - | 工程结构检查记录；必要的目录/入口调整 | 确认 `desktop/frontend`、Wails/Go Bridge 入口、脚本和构建方式 |
-| A2 | 实现 Settings + ProviderConfig + 网络/代理配置 | todo | A1 | SettingsView、settingsStore、ProviderConfig 类型 | 可保存/读取 Base URL、API Key、Model、Provider Type、timeout、proxy；API Key 脱敏 |
+| A1.5 | 补齐 Wails 打包流水线 | done | A1 | Taskfile、生产资产嵌入、Windows exe 构建记录 | `wails3 build` 可先构建前端，再生成 Windows 桌面 exe |
+| A2 | 实现 Settings + ProviderConfig + 网络/代理配置 | todo | A1,A1.5 | SettingsView、settingsStore、ProviderConfig 类型 | 可保存/读取 Base URL、API Key、Model、Provider Type、timeout、proxy；API Key 脱敏 |
 | A3 | 实现 Go Bridge AppData/文件系统封装 | todo | A1 | Go Bridge 文件方法、前端 bridge client | 可获取 AppData、创建项目/任务目录、保存文件、打开文件夹，路径跨平台 |
 | A4 | 实现 ProductInput + ProductContext | todo | A3 | ProductInputPanel、ProductContext 类型、上传保存逻辑 | 可上传 jpg/png/webp，复制到项目目录，读取尺寸/大小/mime，生成 ProductContext |
 | A5 | 实现 PlatformTarget + GenerationPackage | todo | A1 | 平台规则常量、GenerationPackage 类型、TargetPackagePanel | 可选择平台、图片类型、主图/详情/主图+详情生成套餐 |
@@ -219,6 +220,14 @@ MVP-C 完成标准：
 - 验证：desktop/frontend npm run type-check/lint/test/build 通过；desktop go test . 通过；Wails CLI 当前环境未安装，桌面运行/打包验证留待后续环境任务
 - Commit：待提交
 - 备注：已补齐最小 Wails v3 Go 入口和 AppData Bridge 服务；main.go 暂用 Wails AlphaAssets 保持 clean checkout 下可编译，后续 Wails build task 再接入 Vite dist 嵌入产物。
+
+2026-06-08
+- 任务：A1.5 补齐 Wails 打包流水线
+- 状态：done
+- 实现文件：desktop/Taskfile.yml、desktop/assets_dev.go、desktop/assets_prod.go、desktop/main.go、desktop/frontend/eslint.config.ts、docs/development/mvp-implementation-roadmap.md
+- 验证：desktop/frontend npm run type-check/lint/test/build 通过；desktop go test . 通过；PATH=/d/Go/bin:$PATH wails3 build 通过并生成 desktop/bin/shadow-image.exe
+- Commit：待提交
+- 备注：开发/测试默认使用 Wails AlphaAssets，production build tag 嵌入 frontend/dist；wails3 build 通过 Taskfile 串联 npm install、npm run build 和 go build -tags production。
 ```
 
 ## 当前下一步
